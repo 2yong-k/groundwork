@@ -1,0 +1,16 @@
+{
+  "claudeMdExcludes": ["**/.worktrees/**/CLAUDE.md"],
+  "permissions": {
+    "deny": [
+      "Bash(gh secret set:*)",
+      "Bash(gh release create:*)",
+      "Bash(terraform apply:*)",
+      "Bash(terraform destroy:*)",
+      "Bash(supabase db reset:*)",
+      "Read(./.env.production*)",
+      "Read(./**/.env.production*)",
+      "{{claude_deny}}"
+    ],
+    "ask": ["Bash(git push:*)"]
+  }
+}

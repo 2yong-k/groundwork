@@ -1,0 +1,10 @@
+# One PCRE2 pattern per line (rg --pcre2). '#' lines and blank lines are ignored.
+# Keep this file outside the scanned dirs (it lives in scripts/), or its own patterns match themselves.
+# Add "banned-ok: <reason>" in a comment on the same line to allow a single use.
+system-ui
+transition:\s*all
+linear-gradient\(
+backdrop-filter:\s*blur
+(?i)lorem ipsum
+(?i)welcome to 
+font-family:\s*['"]?Inter['"]?\s*[;,}]

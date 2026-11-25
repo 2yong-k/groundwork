@@ -1,0 +1,64 @@
+# CLAUDE.md — {{project}}
+
+{{one_line_purpose}} · Stack: {{stack}} · Primary user: {{primary_user}}
+Client form: {{client_form}} · Modules on: {{profile_line}}
+
+> This file holds **rules only**. What goes where follows the 'Docs' section (in an umbrella's repo, the umbrella `CLAUDE.md`), and the design lives in `DESIGN.md`. When the purpose · users · scope change, fix the intro line above and the summary in `{{context_path}}` on the spot.
+
+## Hard rules — never do these
+1. {{hard_rule_1}}
+2. {{hard_rule_2}}
+3. {{hard_rule_3}}
+(Hard-to-reverse work such as push · deploys · secret values · deleting data is done by the user.)
+When the user says not to do something in this project, add it to this section as one line on the spot, not to memory.
+
+## Commands
+```bash
+{{cmd_dev}}        # dev server / run
+{{cmd_check}}      # done gate: lint + typecheck + tests (done only when all green)
+{{cmd_verify}}     # pre-merge check: done gate + build + e2e (trunk.sh merge calls it)
+{{cmd_test_one}}   # single test
+```
+
+## Structure and boundaries
+- `{{boundary_1_path}}` — {{boundary_1_role}} (interface exposed outside: {{boundary_1_interface}})
+- `{{boundary_2_path}}` — {{boundary_2_role}}
+- `{{boundary_3_path}}` — {{boundary_3_role}}
+Calls across a boundary go only through the interface file. Never import a boundary's inner implementation from outside. When you add a boundary, change a path or add an external SDK allowed in one folder only, also fix the boundary import check of `{{cmd_check}}`, put in one violating import to see it fail, then revert it (a stale pattern finds nothing and passes).
+
+## Conventions
+- Docs language: {{docs_language}} — CONTEXT.md, ADRs, specs, plans and the handoff are written in it; markers, code, identifiers and commit messages stay English.
+- Validation: {{validation_lib}} — every value that comes in through a boundary passes this schema.
+- Data: {{data_conventions}} (e.g. dates in ISO 8601 UTC, amounts as integer minor units)
+- Naming: {{naming_conventions}}
+- Secret values never go in code · logs · docs · chat. `.env.example` holds names only, and config is read only from a module validated against a schema at startup (no reading env directly in code). Key rotation: `{{docs_root}}/runbooks/secret-rotation.md`.
+- Lists carry ordering · pagination (keyset) and a "truncated" signal. Never turn a failed read into an empty value · 0; go through the error-unwrapping helper.
+- A write while offline shows as a failure at once and what was written stays. If the data library by default holds writes and sends them on reconnect, turn that off in code (TanStack Query: mutation `networkMode: 'always'`). Actions sent on reconnect are only those the spec names, and never money-moving ones.
+- When the same value · rule lives in two places (code · SQL · docs · another repo), pick one source; the other side is generated from it or tied to it by a drift test.
+- Commits go straight to main. {{commit_rule}}
+- Docs live only in `{{docs_root}}/{specs,plans,adr,runbooks,research,archive}`. Comments give only the why (no history · ticket numbers).
+- Minor review findings are fixed in the same fix round too. Defer only ① what needs a spec change or a user decision and ② what touches a flow that changes state, such as money or payment · order attempts; when deferring, write the reason in the ledger (if none, the 'Deferred' section at the end of the plan) and list them in the final report (this line wins over a skill's "Minor can wait").
+- Install dependencies exactly from the lockfile and take no version published less than 3 days ago (an urgent security patch is the only exception, for the exact version, through the `{{docs_root}}/runbooks/incident.md` B procedure). Pin CI actions to commit SHAs.
+- Admin and permission actions go into the audit log, and alerts go to one place, `{{alert_email}}`. A new risky feature goes into the `{{docs_root}}/runbooks/incident.md` risky-feature table first.
+- At a security checkpoint (`{{docs_root}}/runbooks/security-levels.md` ①), ask the user to type `/groundwork:security-audit`, then reopen the hardening table.
+- Make the smallest change that solves the real problem (delete > edit > add). Before writing new code, stop at the first rung that holds: not needed → skip it (YAGNI); already in this codebase → reuse it; the standard library, then a platform feature, then an installed dependency does it → use that; only then write the least code that works. Never cut corners on security, data-loss handling, validation at trust boundaries or accessibility.
+- Read before you judge: never guess about code you have not read or intent nobody stated; offer concrete options with a recommendation. Keep to the scope: leave unrelated code as it is, no rewrites on the side.
+- Code: TypeScript `strict`, never `any` or an unnarrowed `unknown`, discriminated unions for variants; Python strict type hints everywhere, ruff for lint and format, pytest. Fail fast with typed errors, match exhaustively, keep null-safety strict; at I/O boundaries handle partial failure and make operations idempotent. Tests cover contracts, boundaries and error semantics.
+- Git: conventional commits `<type>[(scope)][!]: <description>` (feat · fix · docs · style · refactor · perf · test · chore · build · ci · revert). One concern per commit (one concern across N files is one commit), no WIP or mixed-concern commits; tests pass before every commit.
+- Subagents: pick each one's model by risk — Opus for money · settlement · auth · secrets · migrations · on-chain calls · cross-cutting refactors and their reviews, Sonnet for low-risk or mechanical work, Haiku for chores that need no judgement; unsure → Opus.
+- Design (UI): values only from the variables generated from `design/tokens.json` (web `design/tokens.css` · native `design/theme.ts`). Follow the do/don't of `DESIGN.md`. A new component is built together with its states · empty state · loading and its kit entry.
+{{module_rules}}
+
+{{docs_rules}}
+
+## Docs paths
+- spec `{{docs_root}}/specs/YYYY-MM-DD-<topic>-design.md` · plan `{{docs_root}}/plans/YYYY-MM-DD-<topic>.md` · decision `{{docs_root}}/adr/NNNN-<slug>.md` · glossary `{{context_path}}`
+- {{docs_rule_extra}}
+- To restart, run `/groundwork:new` in {{restart_dir}}. This skeleton is from `{{skill_rev}}` (to carry later groundwork fixes over, read groundwork's CHANGELOG from that version on, then set this value to the version carried).
+
+## Mistakes log
+Write down only this project's traps that tests · lint · types cannot block. When the user corrected you, a check failed after you said done, a review caught a defect, or you spun on a trap, weigh whether to write it down; a correction no machine can block still gets its line even when the same turn adds a hard rule.
+- If a machine can block it, build a test · lint · gate instead of a line. Do not write down habits that are the same in every project or working-style preferences. Keep such lines in auto memory (read only in this repo) and propose them to the user as one line for the global `~/.claude/CLAUDE.md`.
+- One line in that work's commit (on a side branch, separately on main): `- YYYY-MM-DD symptom → cause → what to do next time (file:line) · check: <command>`
+- If a written trap is hit again, move it into a test · lint · gate and delete the line. If it truly cannot be blocked, raise it to `Conventions` and delete the line.
+- At each release, check that each line's trap still exists. If the file · dependency it points at is gone or a test · gate already blocks it, delete the line (in the same commit as the docs archive).

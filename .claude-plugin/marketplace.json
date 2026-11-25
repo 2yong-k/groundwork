@@ -1,0 +1,19 @@
+{
+  "name": "groundwork",
+  "owner": {
+    "name": "2yong-k"
+  },
+  "allowCrossMarketplaceDependenciesOn": [
+    "claude-plugins-official"
+  ],
+  "plugins": [
+    {
+      "name": "groundwork",
+      "source": "./plugins/groundwork",
+      "description": "Interview, skeleton, design lock-in and a gate-passing scaffold from an empty folder, then the first task; overlay onto an existing project; operating rules, gates and runbooks."
+    }
+  ],
+  "metadata": {
+    "description": "groundwork: a Claude Code plugin that starts a software project from an empty folder and keeps it on rails."
+  }
+}

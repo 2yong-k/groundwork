@@ -1,0 +1,90 @@
+# DESIGN.md — {{project}}
+
+## Direction
+**{{direction_name}}** — {{direction_intent}}
+Tone: {{tone_3_words}} · References: {{references_with_why}}
+
+## Principles (do)
+- Type hierarchy leads the layout: {{type_pairing}}; sizes use only the 7 steps of `--text-*`.
+- Color is one accent (`--accent`) + 5 state tones (table below), the rest neutral ({{neutral_temperature}}). No color as decoration.
+- Density {{density}}: on one screen, {{density_rule}}.
+- Shape: two corner steps `--radius-sm`/`--radius-md`, shadows only on floating elements (menus · modals).
+- Empty states · loading · errors are designed from the start. Review with real data shapes.
+
+## Bans (don't)
+- Purple-blue · purple-pink palettes, gradients (buttons · titles · backgrounds), blob backgrounds
+- `font-family: system-ui`, single-weight · single-size type
+- `transition: all`, hover zoom, glassmorphism, 3-column grids of icons in circles, emoji icons
+- lorem ipsum, fake numbers, stock illustrations, "Welcome to …" heroes
+- Hardcoded values outside the tokens, skeleton shimmer (a gradient sweep)
+- {{user_additional_bans}}
+
+## Token contract
+- One source, `design/tokens.json` (platform-neutral, light · dark values). The web's `design/tokens.css` and native's `design/theme.ts` are **generated** from it with `build-tokens.mjs` — generated files are never edited by hand. Components reference only the variables (or the theme object).
+- Framework mapping: {{framework_mapping}} (Tailwind v4: `--color-<role>: var(--<role>)` in `@theme inline` of the global CSS)
+- If a new token is needed, first write the reason in this document, add both theme values to `tokens.json` together and regenerate. If it is a text · background pair, also add it to `contrast-pairs.json` and pass the contrast check. Never make a new value inside a component.
+
+## Role tokens
+| Token | Role |
+|---|---|
+| `--bg` · `--surface` · `--surface-raised` | Page background · card · panel background · floating element background |
+| `--text` · `--text-muted` | Body · secondary text (meta · help) |
+| `--line` · `--line-strong` | Dividers · card borders · input borders |
+| `--accent` · `--on-accent` | Fill (primary button background) · the text on it. Used only as a pair |
+| `--accent-text` · `--accent-border` | Accent-colored text · accent-colored border (the fill color is not used as is for text · borders) |
+| `--link` | Link text |
+| `--focus` | Focus ring color |
+| `--skeleton` | Loading placeholder fill |
+| `--tone-<state>-fg` · `--tone-<state>-bg` | Text · background of a state tone (table below) |
+
+## State → tone
+States use only the tones below for chips · banners · row highlights. Never convey meaning by color alone; put text or an icon with it.
+
+| State | Token | Where |
+|---|---|---|
+| `neutral` | `--tone-neutral-fg/bg` | Default · waiting · inactive |
+| `info` | `--tone-info-fg/bg` | Notice · in progress |
+| `positive` | `--tone-positive-fg/bg` | Success · done |
+| `warn` | `--tone-warn-fg/bg` | Caution · deadline soon |
+| `danger` | `--tone-danger-fg/bg` | Error · irreversible action |
+
+## Text
+- Size floor `--text-min` (12px). No text is smaller than this. CJK text is 12px or more too (its strokes blur, so it cannot go smaller than Latin).
+- On touch screens, body text follows the system text size setting, and the layout does not break when it is enlarged.
+{{cjk_rules}}
+
+## Focus
+- Keyboard focus is always visible: `outline: var(--focus-width) solid var(--focus); outline-offset: var(--focus-offset)`. Never leave only `outline: none`.
+- Focus color 3:1 or more against the background (the contrast check has a `focus`/`bg` pair).
+
+## Loading (skeletons)
+- A loading placeholder is a `--skeleton` block the same size as the final shape. 2–3 lines of different lengths make it resemble the real content.
+- Motion is only an opacity pulse with a `--skeleton-dur` period. No shimmer (a gradient sweeping across). It stops under `prefers-reduced-motion: reduce`.
+
+## Motion
+- Times are only `--dur-fast` (state changes) · `--dur-base` (entrances) · `--dur-exit` (exits, shorter than entrances) + `--ease-out`. Properties are named (opacity · transform · color).
+- Under `prefers-reduced-motion: reduce`, the CSS time tokens become 0. Animations made in JS (libraries included) also check `matchMedia('(prefers-reduced-motion: reduce)')` and turn off.
+
+## Component conventions
+- Every component has default · hover · focus · pressed · disabled states, an empty state and a loading state. A state not on this list is written in this document before it is built.
+- Buttons: primary (`--accent`+`--on-accent`) · secondary (border) · ghost · destructive (`--tone-danger-bg` background · `--tone-danger-fg` text and border) · disabled. Height `--control-h` ({{button_height}}).
+- Forms: label above, help below, errors as `--tone-danger-fg` text + border. Required marked in text.
+- Tables: numbers right-aligned · tabular figures, row height `--row-h` ({{row_height}}), states as chips (`--tone-*`).
+- Cards: heights are not forced equal in the same grid. Meta info in `--text-muted`.
+- Empty states: one sentence + one next action. No illustration.
+- Server messages never show on screen as they are. Keep an error code → message table, and show a default message for unknown codes.
+- Inputs are cleared after the request succeeds. Refetched values never overwrite the draft the user was writing.
+- Stacking order (z-index) uses only the token layer steps (`--z-*`), never raw numbers. If there are no layer tokens, add them first per the token contract above — as `z-<name>` keys under `layout` in `design/tokens.json` (the generator makes `--z-<name>`; it drops a new top-level group) — and run the generator again.
+- **Kit registration:** each component is registered, as it is built, on the dev-only kit screen (component × state × theme). A component that is not registered is not done.
+
+## Brand assets
+Settle the following as one set at the stage 3 lock and keep it in one place. App icons · splash · store images · OG cards are made from this set.
+- Logo (for light and dark backgrounds, mark only / mark + wordmark)
+- Favicon (SVG + PNG)
+- OG image (share card)
+- Web manifest icons and `theme-color` (light · dark)
+- For an app, the app icon · splash colors (taken from `tokens.json`)
+
+## Accessibility
+- Body contrast 4.5:1 or more · input borders (`--line-strong`) 3:1 or more (`check-contrast.mjs` checks both themes), focus ring always visible, touch targets 44px, mobile side gutter `--gutter` 16px, no horizontal scroll.
+- Web: when adding a screen, add it to `ROUTES` of `e2e/a11y.spec.ts` too. `pnpm e2e` checks axe (WCAG rules) and the Tab focus ring at the default size and at phone width (390px). axe catches only part of it, so the rules of this section stand as they are.

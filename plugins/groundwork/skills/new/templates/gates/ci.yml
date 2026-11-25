@@ -1,0 +1,84 @@
+name: ci
+# Actions are pinned to full commit SHAs on the node24 runtime; the trailing comment names the tag. To bump: gh api repos/<owner>/<repo>/git/ref/tags/<tag> (follow an annotated tag to its commit) and check 'using:' in its action.yml.
+# Runners are pinned to an image version (ubuntu-latest moves, and a tool can refuse to install on the new image overnight). To bump: change every runs-on in the workflows to the next image in one commit and read the first run. A retired image fails loudly.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', '**/*.md']
+  pull_request:
+    branches: [main]
+    paths-ignore: ['docs/**', '**/*.md']
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: {{cmd_install}}
+      # Uncomment when the gate runs rg (check-banned.sh, rg-none.sh): the runner has no ripgrep.
+      # Keep it a step of its own so cmd_check stays the same command as the local gate.
+      # - run: sudo apt-get update -qq && sudo apt-get install -y ripgrep
+      - run: {{cmd_check}}
+
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: {{cmd_install}}
+      - run: {{cmd_audit}}
+
+  deadcode:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: {{cmd_install}}
+      - run: {{cmd_deadcode}}
+
+  # Web, PWA or webview shell only: uncomment this job. Keep the cmd_ placeholders out of it.
+  # The browser build follows the Playwright version in the lockfile.
+  # e2e:
+  #   runs-on: ubuntu-24.04
+  #   needs: check
+  #   timeout-minutes: 15
+  #   steps:
+  #     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+  #       with:
+  #         persist-credentials: false
+  #     - run: npm ci
+  #     - run: pnpm exec playwright install --with-deps chromium
+  #     - run: pnpm e2e
+
+  # Native app and webview shell only: uncomment this job. Keep the cmd_ placeholders out of it.
+  # eas-cli is a devDependency, so it comes from the lockfile like every other tool; EXPO_TOKEN signs it in.
+  # Manual runs only (Actions tab or `gh workflow run ci.yml`): each run is two cloud builds of the monthly EAS quota.
+  # eas-build:
+  #   if: github.event_name == 'workflow_dispatch'
+  #   runs-on: ubuntu-24.04
+  #   needs: check
+  #   steps:
+  #     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+  #       with:
+  #         persist-credentials: false
+  #     - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+  #       with:
+  #         node-version: 22
+  #     - run: npm ci
+  #     - run: pnpm exec eas build --platform all --profile preview --non-interactive --no-wait
+  #       env:
+  #         EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

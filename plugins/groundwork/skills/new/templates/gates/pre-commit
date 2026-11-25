@@ -1,0 +1,11 @@
+#!/bin/sh
+# Pre-commit secret scan (B2): stops a secret before it reaches git history; CI scans again.
+# Install: copy to .githooks/pre-commit (executable), then `git config core.hooksPath .githooks`.
+# gitleaks reads .gitleaks.toml at the repo root. A missing gitleaks fails the commit, so the
+# scan is never skipped silently.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks is not installed, so staged changes cannot be scanned for secrets." >&2
+  echo "pre-commit: install it (macOS: brew install gitleaks; others: https://github.com/gitleaks/gitleaks/releases)." >&2
+  exit 1
+fi
+exec gitleaks git --pre-commit --staged --redact --verbose

@@ -1,0 +1,22 @@
+name: security-watch
+# Daily dependency audit, even in weeks without commits. 20:37 UTC: off the top of the hour, when GitHub delays or drops scheduled runs.
+# A failed run mails whoever last edited the cron line; public repos pause schedules after 60 days without activity.
+# Runner image pinned like ci.yml (see the comment there for how to bump).
+
+on:
+  schedule:
+    - cron: '37 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: {{cmd_install}}
+      - run: {{cmd_audit}}

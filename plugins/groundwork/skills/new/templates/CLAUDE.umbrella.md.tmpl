@@ -1,0 +1,42 @@
+# CLAUDE.md — {{project}} (umbrella)
+
+{{one_line_purpose}} · Primary user: {{primary_user}}
+
+> This folder is a **docs-only git** (`.gitignore` excludes `{{project}}-*/`). The code lives in the repos below, each its **own git**. Repo sessions load this file too, so it **stays at 7.9KB or less**.
+
+## Repo map
+| Folder | Role | Stack | Done gate |
+|---|---|---|---|
+| `{{project}}-{{unit_1}}` | {{unit_1_role}} | {{unit_1_stack}} | `{{unit_1_gate}}` |
+| `{{project}}-{{unit_2}}` | {{unit_2_role}} | {{unit_2_stack}} | `{{unit_2_gate}}` |
+
+## Docs rules — single source
+- Spec · plan · decision · design docs live **only in this folder's `docs/`**: `docs/specs/YYYY-MM-DD-<topic>-design.md` · `docs/plans/YYYY-MM-DD-<topic>.md` · `docs/adr/NNNN-<slug>.md` · `docs/design/` (DESIGN.md · direction sheet). Terms go in `CONTEXT.md`. **Never create `docs/` inside a repo.**
+- Write the affected repos on **line 2** of each spec · plan file: `> scope: {{unit_1}}` / `> scope: {{unit_1}}+{{unit_2}}` / `> scope: all`.
+- Even when working inside a repo, paths are `../docs/…`.
+- Each repo's `CLAUDE.md` is for that repo only (commands · gate · boundaries · Mistakes log) and is excluded by `.gitignore`.
+- When a doc names a code commit, prefix the repo: `{{unit_2}}@abc1234`.
+- The commit hook (`.githooks/pre-commit`) runs the docs gate. A new clone runs `git config core.hooksPath .githooks` again.
+
+{{docs_rules}}
+
+## Shared hard rules
+1. Hard-to-reverse work such as push · deploys · secret values · deleting data is done by the user.
+2. When one piece of work spans several repos, **commit per repo**. Umbrella folder commits are docs only, straight to main.
+3. Contracts between repos (API response shapes · events · addresses · env var names) go into the spec before they change, with every affected repo listed in `scope`. Both repos get contract tests as tasks.
+4. {{hard_rule_common}}
+When something the user forbids spans several repos, add it here as one line on the spot, not to memory.
+
+## Shared conventions
+- Docs language: {{docs_language}} — CONTEXT.md, ADRs, specs, plans and the handoff are written in it; markers, code, identifiers and commit messages stay English.
+- {{shared_conventions}}
+- Environments (local · staging · prod) never share keys · accounts · buckets · DBs. An empty or unknown environment refuses to start, and scripts run as non-production when given no environment.
+- Secret values never go in code · logs · docs · chat. `.env.example` holds names only, and config is read only from a module validated against a schema at startup (no reading env directly in code). Key rotation: `docs/runbooks/secret-rotation.md`.
+- Prod gets the same build checked on staging, as a fixed tag. Migrations go expand → contract, and a push alone never applies a destructive change.
+- Docs live only in `docs/{specs,plans,adr,runbooks,research,archive}`. Comments give only the why (no history · ticket numbers).
+- Install dependencies exactly from the lockfile and take no version published less than 3 days ago (an urgent security patch is the only exception, for the exact version, through the `docs/runbooks/incident.md` B procedure). Pin CI actions to commit SHAs.
+- At a security checkpoint (`docs/runbooks/security-levels.md` ①), ask the user to type `/groundwork:security-audit`, then reopen the hardening table.
+- Design (UI repos): values only from the variables generated from `design/tokens.json` (`tokens.css` · `theme.ts`). The source is the `design/tokens.json` of one UI repo; other UI repos copy it with `sync-tokens.sh`. Rules: `docs/design/DESIGN.md`.
+
+## Restart
+Run `/groundwork:new` in this folder → a status report per repo, then resume. Implementation happens in that repo.

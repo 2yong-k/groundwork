@@ -1,0 +1,9 @@
+#!/bin/sh
+# Pre-commit hook of an umbrella: its docs-only git has no CI, so the secret scan, the docs gate and the
+# ledger row-length check run here (its runbooks are where a key gets pasted during an incident).
+# Install: copy to .githooks/pre-commit (executable), copy check-docs.sh and rg-none.sh to scripts/,
+# then `git config core.hooksPath .githooks`. A missing tool or script fails the commit, never a silent pass.
+command -v gitleaks >/dev/null 2>&1 || { echo "pre-commit: gitleaks is not installed, so staged changes cannot be scanned for secrets." >&2; exit 1; }
+gitleaks git --pre-commit --staged --redact --verbose || exit 1
+bash scripts/check-docs.sh || exit 1
+[ ! -f docs/ledger.md ] || bash scripts/rg-none.sh -n '^\| (DEF|UX|REQ|SEC|DEBT)-[0-9]+ .{300}' docs/ledger.md || exit 1

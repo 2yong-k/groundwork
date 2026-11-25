@@ -1,0 +1,23 @@
+{
+  "name": "groundwork",
+  "version": "1.0.0",
+  "description": "Interview, skeleton, design lock-in and a gate-passing scaffold from an empty folder, then the first task; overlay onto an existing project; operating rules, gates and runbooks.",
+  "author": {
+    "name": "2yong-k",
+    "url": "https://github.com/2yong-k"
+  },
+  "homepage": "https://github.com/2yong-k/groundwork",
+  "repository": "https://github.com/2yong-k/groundwork",
+  "license": "MIT",
+  "dependencies": [
+    "superpowers@claude-plugins-official"
+  ],
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language",
+      "description": "Language for conversation and the documents groundwork writes from your answers, e.g. English, 한국어, 日本語. Code, commit messages and copied templates stay English.",
+      "default": "English"
+    }
+  }
+}
